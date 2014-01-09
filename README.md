@@ -7,7 +7,7 @@
 
 ##Summary 
 
- Starting with your attempt from the [previous iteration of the Sudoku solver](https://socrates.devbootcamp.com//challenges/75), we now want to add the ability to make guessing.
+Starting with your attempt from the [previous iteration of the Sudoku solver](https://socrates.devbootcamp.com//challenges/75), we now want to add the ability to make guessing.
 
 What happens if a square can contain multiple possible numbers and you don't have enough information to conclude right then and there which number it is?
 
