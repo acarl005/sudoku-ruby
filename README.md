@@ -2,8 +2,8 @@
  
 ##Learning Competencies 
 
-* Model a simple real-world procedure in Ruby.
-* Use Psuedocode to model 
+* Model a simple real-world system in Ruby code
+* Use Pseudocode effectively to model problem-solving
 
 ##Summary 
 
