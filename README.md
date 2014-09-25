@@ -2,43 +2,55 @@
 
 ##Learning Competencies
 
-* Model a simple real-world procedure in Ruby.
-* Use Psuedocode to model
+* Model a simple real-world system in Ruby code
+* Use Pseudocode effectively to model problem-solving
+* Practice single responsibility of methods
+* Practice effective naming of variables and methods
 
 ##Summary
 
-Starting with your attempt from the [previous iteration of the Sudoku solver](https://socrates.devbootcamp.com//challenges/75), we now want to add the ability to make guessing.
+More advanced Sudoku games can't be solved with the simple logic we used in Sudoku 1.  It's time to upgrade your solver and tackle more complex boards.
 
-What happens if a square can contain multiple possible numbers and you don't have enough information to conclude right then and there which number it is?
+Most people who attempt Sudoku games of intermediate or expert difficulty usually write potential possibilities in the corners of the current cell and investigate how a plugging in a value would play out in the game.  Other Sudoku players use additional techniques to employ more than just the row, column, and box to narrow possibilities.
 
-Most people who play Sudoku "guess," usually by writing possibilities in the corners of the square.
+In this challenge, the goal is to strengthen your algorithm to include guessing or more elaborate techniques.
+
 
 ##Releases
 
-###Release 0 : Implement a guessing-friendly version of Sudoku
+### Release 0 :  More Advanced Logic
 
-Once we've filled in all cells which have only one possible value, we have to guess.  Write out pseudocode for how that might work before you dive in!
+**Improve your Sudoku solver to solve the next five puzzles.**
 
-This solver should now be able to solve any Sudoku puzzle, although some will take a long time.  Try it with the `sample.unsolved.txt` file in the source folder.
+Puzzles 6 - 10 from `set-01_sudoku_puzzles.txt` can be solved using logic alone but require more than just identifying when a square has only one possible value.  
 
-### Release 1: Try your luck
+The `Sudoku#solve` method should still give up if it gets stuck.
 
-The `source` folder of this repo includes 4 puzzle sets:
 
-- set-01_sample.unsolved
+### Release 1:  Eduated Guessing
+
+**Improve your Sudoku solver to solve all of the puzzles.**
+
+Sooner or later, some Sudoku games require a form of guessing to solve the board successfully.  Write out pseudocode for how that might work before you dive in!
+
+Use the Puzzles 11 - 15 from `set-01_sudoku_puzzles.txt` to test your algorithm. 
+
+#### Choose your path: 
+
+1) Use your existing algorithm to solve as many cells of your board using logic, and then let your new guessing alorithm take over.  This may make your algorithm faster for boards containing cells with one possible value.
+
+2) Start from scratch and code a new solution that applies guessing from the beginning. If your Sudoku 1 code was written with single responsibility and great naming, you'll be able to leverage many of your existing methods. 
+
+
+### Release 2: Benchmarking and competing to win 
+
+The `source` folder of this repo includes 3 more puzzle sets:
+
 - set-02_project_euler_50-easy-puzzles
-- set-02_project_euler_50-easy-puzzles
+- set-03_peter-norvig_95-hard-puzzles
 - set-04_peter-norvig_11-hardest-puzzles
 
-If you haven't yet tried your hand at the harder puzzles, run your solver against them to see what happens.
-
-Can your solver solve the hardest puzzles?
-
-How long does it take to solve one puzzle?
-
-How long does it take to solve all the puzzles in a set?
-
-### Release 2: Compete to win
+Run your solver against them to see what happens.
 
 Here are the [results of a solver](http://norvig.com/sudoku.html) created by [Peter Norvig](http://en.wikipedia.org/wiki/Peter_Norvig)
 
@@ -52,3 +64,11 @@ Can your solver beat his?
 
 You should [check out his solution](http://norvig.com/sudopy.shtml) and see what you might learn from it.  Get ready to read some Python!
 
+
+#### Profiling your code
+
+If you're curious, you might want to see how long it takes for each line of code in your solver to run.
+
+One tool you might use to do this is [rblineprof](https://github.com/tmm1/rblineprof).  There are lots of ways to profile your code.
+
+After profiling, did you learn anything about how your solver works to improve its overall performance?
