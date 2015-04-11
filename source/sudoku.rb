@@ -100,10 +100,9 @@ class Sudoku
     until solved?
       check_individuals
       find_unique_row
-      check_individuals
       find_unique_column
       counter += 1
-      break if counter == 100
+      break if counter == 50
     end
     self
   end
