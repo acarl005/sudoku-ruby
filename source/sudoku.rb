@@ -26,7 +26,7 @@ class Sudoku
     end
   end
 
-  def find_unique_alg(cell_array)
+  def find_unique(cell_array)
     possibilities = cell_array.map(&:possibilities)
     flat = possibilities.flatten
     flat.each do |number|
@@ -35,8 +35,8 @@ class Sudoku
         unique_cell = cell_array.find do |cell|
           cell.possibilities.include?(unique_number)
         end
-        unique_cell.num = unique_number
-        unique_cell.possibilities.clear
+        unique_cell.possibilities = [unique_number]
+        solve_cell(unique_cell)
       end
     end
   end
@@ -65,7 +65,19 @@ class Sudoku
 
   def solve_cell(cell)
     cell.num = cell.possibilities.pop
-    check_individuals
+    update_relatives(cell)
+  end
+
+  def update_relatives(cell)
+    cells_in_row(cell.row).each do |relative|
+      relative.possibilities.delete(cell.num)
+    end
+    cells_in_column(cell.column).each do |relative|
+      relative.possibilities.delete(cell.num)
+    end
+    cells_in_box(cell.box).each do |relative|
+      relative.possibilities.delete(cell.num)
+    end
   end
 
   def solved?
@@ -81,17 +93,15 @@ class Sudoku
     end
   end
 
-  def find_unique_row
+  def scan_groups
     (0..8).each do |row|
-      find_unique_alg(cells_in_row(row))
-      check_individuals
+      find_unique(cells_in_row(row))
     end
-  end
-
-  def find_unique_column
     (0..8).each do |column|
-      find_unique_alg(cells_in_column(column))
-      check_individuals
+      find_unique(cells_in_column(column))
+    end
+    (0..8).each do |box|
+      find_unique(cells_in_box(box))
     end
   end
 
@@ -99,50 +109,56 @@ class Sudoku
     counter = 0
     until solved?
       check_individuals
-      find_unique_row
-      find_unique_column
+      scan_groups
       counter += 1
       break if counter == 50
     end
-    self
   end
 
   def to_p
-    string = ''
-    @board.each_slice(27) do |block|
-      string << "-------------------------------\n"
-      block.each_slice(9) do |row|
-        horizontal = row.map do |cell|
-          number = cell.num
-          number ||= "#{cell.possibilities}"
-        end
-        to_print = '| '
-        horizontal.each_slice(3) { |section|
-          to_print << section.join('  ') << ' | '
-        }
-        string << to_print + "\n"
-      end
-    end
-    string << "-------------------------------\n"
+    string = <<-BOARD
+      +-------+-------+-------+
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      +-------+-------+-------+
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      +-------+-------+-------+
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      +-------+-------+-------+
+    BOARD
+    @board.each { |cell|
+      display = cell.num || "#{cell.possibilities}"
+      string.sub!(/X/, display.to_s)
+    }
+    string
   end
 
   def to_s
-    string = ''
-    @board.each_slice(27) do |block|
-      string << "-------------------------------\n"
-      block.each_slice(9) do |row|
-        horizontal = row.map do |cell|
-          number = cell.num
-          number ||= "-"
-        end
-        to_print = '| '
-        horizontal.each_slice(3) { |section|
-          to_print << section.join('  ') << ' | '
-        }
-        string << to_print + "\n"
-      end
-    end
-    string << "-------------------------------\n"
+    string = <<-BOARD
+      +-------+-------+-------+
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      +-------+-------+-------+
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      +-------+-------+-------+
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      | X X X | X X X | X X X |
+      +-------+-------+-------+
+    BOARD
+    @board.each { |cell|
+      display = cell.num || "-"
+      string.sub!(/X/, display.to_s)
+    }
+    string
   end
 end
 
@@ -167,15 +183,9 @@ class Cell
   def get_box(pos)
     pos_vert = pos.to_i / 30
     pos_hor = pos[1].to_i / 3
-    return 0 if pos_vert == 0 && pos_hor == 0
-    return 1 if pos_vert == 0 && pos_hor == 1
-    return 2 if pos_vert == 0 && pos_hor == 2
-    return 3 if pos_vert == 1 && pos_hor == 0
-    return 4 if pos_vert == 1 && pos_hor == 1
-    return 5 if pos_vert == 1 && pos_hor == 2
-    return 6 if pos_vert == 2 && pos_hor == 0
-    return 7 if pos_vert == 2 && pos_hor == 1
-    return 8 if pos_vert == 2 && pos_hor == 2
+    [ [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8] ][pos_vert][pos_hor]
   end
 end
 

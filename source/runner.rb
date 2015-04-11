@@ -10,7 +10,7 @@ board_strings.each_with_index do |board_string, i|
   game = Sudoku.new(board_string.chomp)
   game.solve
   puts i
-  puts game
+  puts game.to_p
 end
 
 # game = Sudoku.new('1--92----524-1-----------7--5---81-2---------4-27---9--6-----------3-945----71--6')
