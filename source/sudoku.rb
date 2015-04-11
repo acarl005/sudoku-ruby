@@ -37,7 +37,6 @@ class Sudoku
         end
         unique_cell.num = unique_number
         unique_cell.possibilities.clear
-        self.check_individuals
       end
     end
   end
@@ -66,7 +65,7 @@ class Sudoku
 
   def solve_cell(cell)
     cell.num = cell.possibilities.pop
-    self.check_individuals
+    check_individuals
   end
 
   def solved?
@@ -85,43 +84,48 @@ class Sudoku
   def find_unique_row
     (0..8).each do |row|
       find_unique_alg(cells_in_row(row))
+      check_individuals
     end
   end
 
   def find_unique_column
     (0..8).each do |column|
       find_unique_alg(cells_in_column(column))
+      check_individuals
     end
   end
 
   def solve
+    counter = 0
     until solved?
       check_individuals
       find_unique_row
       check_individuals
       find_unique_column
+      counter += 1
+      break if counter == 100
     end
     self
   end
 
-  # def to_s!
-  #   string = ''
-  #   @board.each_slice(27) do |block|
-  #     string << "-------------------------------\n"
-  #     block.each_slice(9) do |row|
-  #       horizontal = row.map do |cell|
-  #         number = cell.num
-  #         number ||= "#{cell.possibilities}"
-  #       end
-  #       to_print = '| '
-  #       horizontal.each_slice(3) { |section|
-  #         to_print << section.join('  ') << ' | '
-  #       }
-  #       string << to_print + "\n"
-  #     end
-  #   end
-  #   string << "-------------------------------\n"
-  # end
+  def to_p
+    string = ''
+    @board.each_slice(27) do |block|
+      string << "-------------------------------\n"
+      block.each_slice(9) do |row|
+        horizontal = row.map do |cell|
+          number = cell.num
+          number ||= "#{cell.possibilities}"
+        end
+        to_print = '| '
+        horizontal.each_slice(3) { |section|
+          to_print << section.join('  ') << ' | '
+        }
+        string << to_print + "\n"
+      end
+    end
+    string << "-------------------------------\n"
+  end
 
   def to_s
     string = ''
@@ -176,7 +180,7 @@ class Cell
   end
 end
 
-practice_cell = Cell.new(52, 2)
-game = Sudoku.new("-3-5--8-45-42---1---8--9---79-8-61-3-----54---5------78-----7-2---7-46--61-3--5--")
-puts game.solve
+# practice_cell = Cell.new(52, 2)
+# game = Sudoku.new("-3-5--8-45-42---1---8--9---79-8-61-3-----54---5------78-----7-2---7-46--61-3--5--")
+# puts game.solve
 # puts game.find_unique(game.cells_in_row(0))
