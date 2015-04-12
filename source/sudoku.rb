@@ -1,36 +1,7 @@
+# Check out the runner.rb!
 
-class Sudoku
-  attr_reader :board, :guesses
-  def initialize(board_string)
-    @board = []
-    board_string.each_char.with_index do |char, index|
-      @board << Cell.new(index, char.to_i)
-    end
-    @guesses = 0
-  end
-
-  def board_string
-    @board.map { |cell| cell.num || '-' }.join
-  end
-
-  def cells_in_row(num)
-    @board.select do |cell|
-      cell.row == num
-    end
-  end
-
-  def cells_in_column(num)
-    @board.select do |cell|
-      cell.column == num
-    end
-  end
-
-  def cells_in_box(num)
-    @board.select do |cell|
-      cell.box == num
-    end
-  end
-
+# Look at this module last
+module AdvancedLogic
   def adjacent_row_boxes(num)
     if num % 3 == 1
       [
@@ -69,103 +40,8 @@ class Sudoku
     end
   end
 
-  def solved?
-    numbers = @board.map(&:num)
-    !numbers.include?(nil)
-  end
-
-  def solve
-    counter = 0
-    until solved?
-      check_individuals
-      scan_groups
-      analyze_possi
-      counter += 1
-      break if counter == 10
-    end
-    start_guessing if !solved?
-  end
-
-  def check_individuals
-    @board.each do |cell|
-      if !cell.num
-        try_solve_cell(cell)
-      end
-    end
-  end
-
-  def try_solve_cell(cell)
-    cells_in_column(cell.column)
-      .map(&:num)
-      .compact
-      .each do |number|
-        cell.possi.delete(number)
-      end
-    cells_in_row(cell.row)
-      .map(&:num)
-      .compact
-      .each do |number|
-        cell.possi.delete(number)
-      end
-    cells_in_box(cell.box)
-      .map(&:num)
-      .compact
-      .each do |number|
-        cell.possi.delete(number)
-      end
-    solve_cell(cell) if cell.possi.length == 1
-  end
-
-  def solve_cell(cell)
-    cell.num = cell.possi.pop
-    update_relatives(cell)
-  end
-
-  def update_relatives(cell)
-    cells_in_row(cell.row).each do |relative|
-      relative.possi.delete(cell.num)
-    end
-    cells_in_column(cell.column).each do |relative|
-      relative.possi.delete(cell.num)
-    end
-    cells_in_box(cell.box).each do |relative|
-      relative.possi.delete(cell.num)
-    end
-  end
-
-  def scan_groups
-    (0..8).each do |row|
-      find_unique(cells_in_row(row))
-    end
-    (0..8).each do |column|
-      find_unique(cells_in_column(column))
-    end
-    (0..8).each do |box|
-      find_unique(cells_in_box(box))
-    end
-  end
-
-  def find_unique(cell_array)
-    possi = cell_array.map(&:possi)
-    flat = possi.flatten
-    flat.each do |number|
-      if flat.count(number) == 1
-        unique_number = number
-        unique_cell = cell_array.find do |cell|
-          cell.possi.include?(unique_number)
-        end
-        unique_cell.possi = [unique_number]
-        solve_cell(unique_cell)
-      end
-    end
-  end
-
   def analyze_possi
-    @board.each do |cell|
-      if !cell.num
-        examine_row_neighboors(cell)
-      end
-    end
+    @board.each { |cell| examine_row_neighboors(cell) if !cell.num }
   end
 
   def examine_row_neighboors(cell)
@@ -201,31 +77,128 @@ class Sudoku
     end
     remove_these.each { |num| cell.possi.delete(num) }
   end
+end
+
+module Navigation
+  def cells_in_row(num)
+    @board.select { |cell| cell.row == num }
+  end
+
+  def cells_in_column(num)
+    @board.select { |cell| cell.column == num }
+  end
+
+  def cells_in_box(num)
+    @board.select { |cell| cell.box == num }
+  end
+end
+
+module SolvingLogic
+  def board_string
+    @board.map { |cell| cell.num || '-' }
+          .join
+  end
+
+  def solved?
+    numbers = @board.map(&:num)
+    !numbers.include?(nil)
+  end
+
+  def check_individuals
+    @board.each { |cell| try_solve_cell(cell) if !cell.num }
+  end
+
+  def try_solve_cell(cell)
+    cells_in_column(cell.column)
+      .map(&:num)
+      .compact
+      .each { |number| cell.possi.delete(number) }
+    cells_in_row(cell.row)
+      .map(&:num)
+      .compact
+      .each { |number| cell.possi.delete(number) }
+    cells_in_box(cell.box)
+      .map(&:num)
+      .compact
+      .each { |number| cell.possi.delete(number) }
+    solve_cell(cell) if cell.possi.length == 1
+  end
+
+  def solve_cell(cell)
+    cell.num = cell.possi.pop
+    update_relatives(cell)
+  end
+
+  def update_relatives(cell)
+    cells_in_row(cell.row).each { |celll| celll.possi.delete(cell.num) }
+    cells_in_column(cell.column).each { |celll| celll.possi.delete(cell.num) }
+    cells_in_box(cell.box).each { |celll| celll.possi.delete(cell.num) }
+  end
+
+  def scan_groups
+    (0..8).each { |row| find_unique(cells_in_row(row)) }
+    (0..8).each { |column| find_unique(cells_in_column(column)) }
+    (0..8).each { |box| find_unique(cells_in_box(box)) }
+  end
+end
+
+class Sudoku
+  include AdvancedLogic, Navigation, SolvingLogic
+  attr_reader :board, :guesses
+  def initialize(board_string)
+    @board = board_string.each_char.with_index.map { |char, index| Cell.new(index, char.to_i) }
+    @guesses = 0
+  end
+
+  def solve
+    10.times do
+      check_individuals
+      scan_groups
+      analyze_possi
+      break if solved?
+    end
+    start_guessing if !solved?
+  end
+
+  def find_unique(cell_array)
+    possi = cell_array.map(&:possi)
+    flat = possi.flatten
+    flat.each do |number|
+      if flat.count(number) == 1
+        unique_number = number
+        unique_cell = cell_array.find do |cell|
+          cell.possi.include?(unique_number)
+        end
+        unique_cell.possi = [unique_number]
+        solve_cell(unique_cell)
+      end
+    end
+  end
 
   def start_guessing
     guesses = map_guesses(self)
-    puts find_correct_guess(guesses)
+    puts try_find_correct_guess(guesses)
   end
 
   def map_guesses(obj)
     obj.board.find { |cell| !cell.num }
-                        .possi
-                        .map do |num|
-                          guess = Guess.new(obj.board_string)
-                          guess.guess(num)
-                          guess.solve
-                          guess
-                        end
+             .possi
+             .map do |num|
+               guess = Guess.new(obj.board_string)
+               guess.guess(num)
+               guess.solve
+               guess
+             end
   end
 
-  def find_correct_guess(guesses)
+  def try_find_correct_guess(guesses)
     guesses.select! { |guess| guess.valid }
     return 'no valid guess' if guesses.empty? || @guesses > 10
     @board = (guesses.find(&:solved?) || self).board
     if !solved?
       more_guesses = []
       guesses.slice(0,3).each { |guess| more_guesses.concat(map_guesses(guess)) }
-      find_correct_guess(more_guesses)
+      try_find_correct_guess(more_guesses)
     end
   end
   #recursive FTW
@@ -278,14 +251,12 @@ class Sudoku
 end
 
 
-class Guess < Sudoku
-  attr_reader :valid
+class Guess
+  include Navigation, SolvingLogic
+  attr_reader :valid, :board
   def initialize(board_string)
     @valid = true
-    @board = []
-    board_string.each_char.with_index do |char, index|
-      @board << Cell.new(index, char.to_i)
-    end
+    @board = board_string.each_char.with_index.map { |char, index| Cell.new(index, char.to_i) }
     solve
   end
 
@@ -296,9 +267,7 @@ class Guess < Sudoku
       flat.each do |number|
         if flat.count(number) == 1
           unique_number = number
-          unique_cell = cell_array.find do |cell|
-            cell.possi.include?(unique_number)
-          end
+          unique_cell = cell_array.find { |cell| cell.possi.include?(unique_number) }
           unique_cell.possi = [unique_number]
           solve_cell(unique_cell)
         end
@@ -315,13 +284,10 @@ class Guess < Sudoku
   end
 
   def solve
-    counter = 0
-    until solved?
+    10.times do
       check_individuals
       scan_groups
-      analyze_possi
-      counter += 1
-      break if counter == 10
+      break if solved?
     end
   end
 end
@@ -341,4 +307,3 @@ class Cell
     @possi ||= []
   end
 end
-
