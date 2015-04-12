@@ -203,23 +203,30 @@ class Sudoku
   end
 
   def start_guessing
-    @guesses += 1
-    guesses = @board.find { |cell| !cell.num }
-                    .possi
-                    .map do |num|
-                      guess = Guess.new(board_string)
-                      guess.guess(num)
-                      guess.solve
-                      guess
-                    end
-    find_correct_guess(guesses)
+    guesses = map_guesses(self)
+    puts find_correct_guess(guesses)
+  end
+
+  def map_guesses(obj)
+    obj.board.find { |cell| !cell.num }
+                        .possi
+                        .map do |num|
+                          guess = Guess.new(obj.board_string)
+                          guess.guess(num)
+                          guess.solve
+                          guess
+                        end
   end
 
   def find_correct_guess(guesses)
     guesses.select! { |guess| guess.valid }
-    return 'no valid guess' if guesses.empty? || @guesses > 25
-    @board = (guesses.find(&:solved?) || guesses[0]).board
-    start_guessing if !solved?
+    return 'no valid guess' if guesses.empty? || @guesses > 10
+    @board = (guesses.find(&:solved?) || self).board
+    if !solved?
+      more_guesses = []
+      guesses.slice(0,3).each { |guess| more_guesses.concat(map_guesses(guess)) }
+      find_correct_guess(more_guesses)
+    end
   end
   #recursive FTW
 
@@ -335,8 +342,3 @@ class Cell
   end
 end
 
-# practice_cell = Cell.new(52, 2)
-# game = Sudoku.new("-3-5--8-45-42---1---8--9---79-8-61-3-----54---5------78-----7-2---7-46--61-3--5--")
-# game.solve
-# puts game
-# p game.adjacent_column_boxes(2).map { |box| box.map(&:num) }
