@@ -42,6 +42,7 @@ module AdvancedLogic
 
   def analyze_possi
     @board.each { |cell| examine_row_neighboors(cell) if !cell.num }
+    @board.each { |cell| examine_column_neighboors(cell) if !cell.num }
   end
 
   def examine_row_neighboors(cell)
@@ -148,6 +149,7 @@ class Sudoku
   def initialize(board_string)
     @board = board_string.each_char.with_index.map { |char, index| Cell.new(index, char.to_i) }
     @guesses = 0
+    @valid = true
   end
 
   def solve
@@ -197,7 +199,7 @@ class Sudoku
     @board = (guesses.find(&:solved?) || self).board
     if !solved?
       more_guesses = []
-      guesses.slice(0,3).each { |guess| more_guesses.concat(map_guesses(guess)) }
+      guesses.slice(0,5).each { |guess| more_guesses.concat(map_guesses(guess)) }
       try_find_correct_guess(more_guesses)
     end
   end
@@ -274,6 +276,7 @@ class Guess
       end
     rescue
       @valid = false
+      return
     end
   end
 
@@ -287,7 +290,7 @@ class Guess
     10.times do
       check_individuals
       scan_groups
-      break if solved?
+      break if solved? or !valid
     end
   end
 end
