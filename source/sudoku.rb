@@ -1,6 +1,96 @@
-# Check out the runner.rb!
+class Cell
+  attr_reader :row, :box, :column
+  attr_accessor :num, :possi
+  def initialize(str_index, num)
+    @num = num == 0 ? nil : num
+    @row = str_index / 9
+    @column = str_index % 9
+    @box = [ [0, 1, 2],
+             [3, 4, 5],
+             [6, 7, 8] ][row / 3][column / 3]
+    @possi = (1..9).to_a if !@num
+    @possi ||= []
+  end
+end
 
-# Look at this module last
+module Navigation
+  def cells_in_row(num)
+    @board.select { |cell| cell.row == num }
+  end
+
+  def cells_in_column(num)
+    @board.select { |cell| cell.column == num }
+  end
+
+  def cells_in_box(num)
+    @board.select { |cell| cell.box == num }
+  end
+end
+
+module SolvingLogic
+  def board_string
+    @board.map { |cell| cell.num || '-' }
+          .join
+  end
+
+  def solved?
+    numbers = @board.map(&:num)
+    !numbers.include?(nil)
+  end
+
+  def check_individuals
+    @board.each { |cell| try_solve_cell(cell) if !cell.num }
+  end
+
+  def try_solve_cell(cell)
+    cells_in_column(cell.column)
+      .map(&:num)
+      .compact
+      .each { |number| cell.possi.delete(number) }
+    cells_in_row(cell.row)
+      .map(&:num)
+      .compact
+      .each { |number| cell.possi.delete(number) }
+    cells_in_box(cell.box)
+      .map(&:num)
+      .compact
+      .each { |number| cell.possi.delete(number) }
+    solve_cell(cell) if cell.possi.length == 1
+  end
+
+  def solve_cell(cell)
+    cell.num = cell.possi.pop
+    update_relatives(cell)
+  end
+
+  def update_relatives(cell)
+    cells_in_row(cell.row).each { |celll| celll.possi.delete(cell.num) }
+    cells_in_column(cell.column).each { |celll| celll.possi.delete(cell.num) }
+    cells_in_box(cell.box).each { |celll| celll.possi.delete(cell.num) }
+  end
+
+  def scan_groups
+    (0..8).each { |row| find_unique(cells_in_row(row)) }
+    (0..8).each { |column| find_unique(cells_in_column(column)) }
+    (0..8).each { |box| find_unique(cells_in_box(box)) }
+  end
+
+  def find_unique(cell_array)
+    possi = cell_array.map(&:possi)
+    flat = possi.flatten
+    flat.each do |number|
+      if flat.count(number) == 1
+        unique_number = number
+        unique_cell = cell_array.find do |cell|
+          cell.possi.include?(unique_number)
+        end
+        unique_cell.possi = [unique_number]
+        solve_cell(unique_cell)
+      end
+    end
+  end
+end
+
 module AdvancedLogic
   def adjacent_row_boxes(num)
     if num % 3 == 1
@@ -80,69 +170,6 @@ module AdvancedLogic
   end
 end
 
-module Navigation
-  def cells_in_row(num)
-    @board.select { |cell| cell.row == num }
-  end
-
-  def cells_in_column(num)
-    @board.select { |cell| cell.column == num }
-  end
-
-  def cells_in_box(num)
-    @board.select { |cell| cell.box == num }
-  end
-end
-
-module SolvingLogic
-  def board_string
-    @board.map { |cell| cell.num || '-' }
-          .join
-  end
-
-  def solved?
-    numbers = @board.map(&:num)
-    !numbers.include?(nil)
-  end
-
-  def check_individuals
-    @board.each { |cell| try_solve_cell(cell) if !cell.num }
-  end
-
-  def try_solve_cell(cell)
-    cells_in_column(cell.column)
-      .map(&:num)
-      .compact
-      .each { |number| cell.possi.delete(number) }
-    cells_in_row(cell.row)
-      .map(&:num)
-      .compact
-      .each { |number| cell.possi.delete(number) }
-    cells_in_box(cell.box)
-      .map(&:num)
-      .compact
-      .each { |number| cell.possi.delete(number) }
-    solve_cell(cell) if cell.possi.length == 1
-  end
-
-  def solve_cell(cell)
-    cell.num = cell.possi.pop
-    update_relatives(cell)
-  end
-
-  def update_relatives(cell)
-    cells_in_row(cell.row).each { |celll| celll.possi.delete(cell.num) }
-    cells_in_column(cell.column).each { |celll| celll.possi.delete(cell.num) }
-    cells_in_box(cell.box).each { |celll| celll.possi.delete(cell.num) }
-  end
-
-  def scan_groups
-    (0..8).each { |row| find_unique(cells_in_row(row)) }
-    (0..8).each { |column| find_unique(cells_in_column(column)) }
-    (0..8).each { |box| find_unique(cells_in_box(box)) }
-  end
-end
-
 class Sudoku
   include AdvancedLogic, Navigation, SolvingLogic
   attr_reader :board, :guesses
@@ -160,21 +187,6 @@ class Sudoku
       break if solved?
     end
     start_guessing if !solved?
-  end
-
-  def find_unique(cell_array)
-    possi = cell_array.map(&:possi)
-    flat = possi.flatten
-    flat.each do |number|
-      if flat.count(number) == 1
-        unique_number = number
-        unique_cell = cell_array.find do |cell|
-          cell.possi.include?(unique_number)
-        end
-        unique_cell.possi = [unique_number]
-        solve_cell(unique_cell)
-      end
-    end
   end
 
   def start_guessing
@@ -203,27 +215,26 @@ class Sudoku
       try_find_correct_guess(more_guesses)
     end
   end
-  #recursive FTW
 
   def to_p
     string = <<-BOARD
-      +-------+-------+-------+
-      | X X X | X X X | X X X |
-      | X X X | X X X | X X X |
-      | X X X | X X X | X X X |
-      +-------+-------+-------+
-      | X X X | X X X | X X X |
-      | X X X | X X X | X X X |
-      | X X X | X X X | X X X |
-      +-------+-------+-------+
-      | X X X | X X X | X X X |
-      | X X X | X X X | X X X |
-      | X X X | X X X | X X X |
-      +-------+-------+-------+
++---------+---------+---------+---------+---------+---------+---------+---------+---------+
+|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|
+|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|
+|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|
++---------+---------+---------|---------+---------+---------|---------+---------+---------+
+|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|
+|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|
+|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|
++---------+---------+---------|---------+---------+---------|---------+---------+---------+
+|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|
+|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|
+|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|XXXXXXXXX XXXXXXXXX XXXXXXXXX|
++---------+---------+---------+---------+---------+---------+---------+---------+---------+
     BOARD
     @board.each { |cell|
-      display = cell.num || "#{cell.possi}"
-      string.sub!(/X/, display.to_s)
+      display = cell.possi.join.center(9) || ""
+      string.sub!(/XXXXXXXXX/, display.to_s)
     }
     string
   end
@@ -262,24 +273,6 @@ class Guess
     solve
   end
 
-  def find_unique(cell_array)
-    possi = cell_array.map(&:possi)
-    flat = possi.flatten
-    begin
-      flat.each do |number|
-        if flat.count(number) == 1
-          unique_number = number
-          unique_cell = cell_array.find { |cell| cell.possi.include?(unique_number) }
-          unique_cell.possi = [unique_number]
-          solve_cell(unique_cell)
-        end
-      end
-    rescue
-      @valid = false
-      return
-    end
-  end
-
   def guess(num)
     cell = @board.find { |cell| !cell.num }
     cell.possi = [num]
@@ -287,26 +280,15 @@ class Guess
   end
 
   def solve
-    10.times do
-      check_individuals
-      scan_groups
-      break if solved? or !valid
+    begin
+      10.times do
+        check_individuals
+        scan_groups
+        break if solved? or !valid
+      end
+    rescue
+      @valid = false
+      return
     end
-  end
-end
-
-
-class Cell
-  attr_reader :row, :box, :column
-  attr_accessor :num, :possi
-  def initialize(str_index, num)
-    @num = num == 0 ? nil : num
-    @row = str_index / 9
-    @column = str_index % 9
-    @box = [ [0, 1, 2],
-             [3, 4, 5],
-             [6, 7, 8] ][row / 3][column / 3]
-    @possi = (1..9).to_a if !@num
-    @possi ||= []
   end
 end
